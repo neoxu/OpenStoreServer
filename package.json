@@ -1,0 +1,26 @@
+{
+  "name": "pixgrid",
+  "version": "0.1.0",
+  "description": "Photo uploader",
+  "framework": "mvc",
+  "main": "app.js",
+  "logfile" : "pixgrid.log",
+  "keywords": [
+  ],
+  "author": "Peter Lee (plee@appcelerator.com)",
+  "maintainers": [
+  ],
+  "contributors": [
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "preferGlobal": false,
+  "dependencies": {
+    "express-partials": "*",
+    "mongodb": ">=1.1.6"
+  },
+  "license":"",
+  "private": true
+}
