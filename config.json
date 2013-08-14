@@ -1,0 +1,51 @@
+{
+  "routes":
+  [
+    { "path": "/", "method": "GET", "callback": "application#index" },
+        
+    { "path": "/findUser", "method": "GET", "callback": "database#findUser" },
+    { "path": "/updateUser", "method": "POST", "callback": "database#updateUser" },
+    { "path": "/fbLogin", "method": "POST", "callback": "user#fbLogin" },
+        
+    { "path": "/removeCustom", "method": "POST", "callback": "database#removeCustom" },
+    { "path": "/updateCustoms", "method": "POST", "callback": "database#updateCustoms" },
+    { "path": "/findCustoms", "method": "GET", "callback": "database#findCustoms" },  
+    
+    { "path": "/removeReservation", "method": "POST", "callback": "database#removeReservation" },
+    { "path": "/updateReservation", "method": "POST", "callback": "database#updateReservation" },
+    { "path": "/findReservation", "method": "POST", "callback": "database#findReservation" },    
+    
+    { "path": "/removeStore", "method": "POST", "callback": "database#removeStore" },
+    { "path": "/updateStore", "method": "POST", "callback": "database#updateStore" },
+    { "path": "/findStore", "method": "GET", "callback": "database#findStores" },
+    { "path": "/findMemberDetail", "method": "POST", "callback": "database#findMemberDetail" },
+    { "path": "/updateInviteMember", "method": "POST", "callback": "database#updateInviteMember" },    
+    
+    { "path": "/findInviteStore", "method": "GET", "callback": "database#findInviteStore" },
+    { "path": "/updateInviteStore", "method": "POST", "callback": "database#updateInviteStore" },
+    
+    { "path": "/findMyWork", "method": "GET", "callback": "database#findMyWork" },        
+    { "path": "/findWorks", "method": "POST", "callback": "database#findWorks" },
+    { "path": "/updateJoinWork", "method": "POST", "callback": "database#updateJoinWork" },
+    
+    { "path": "/login", "method": "POST", "callback": "session#login" },
+    { "path": "/login", "method": "GET", "callback": "application#login" },
+    { "path": "/logout", "method": "GET", "callback": "session#logout" },
+    { "path": "/signup", "method": "GET", "callback": "application#signup" },
+    { "path": "/signup", "method": "POST", "callback": "user#signup" },
+
+    { "path": "/photos/create", "method": "POST", "callback": "photos#_create" },
+    { "path": "/photos/create.json", "method": "POST", "callback": "photos#_create_json" },
+    { "path": "/photos/:id/delete", "method": "GET", "callback": "photos#_destroy" },
+
+    { "path": "*", "method": "GET", "callback": "application#page_not_found" }
+  ],
+  "filters":
+  [
+    { "path": "/", "callback": "session_filter#checkUserSession" }
+  ],
+  "websockets":
+  [
+  	{ "event": "", "callback": ""}
+  ]
+}
