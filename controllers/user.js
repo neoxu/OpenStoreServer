@@ -75,7 +75,7 @@ function signup(req, res) {
 	  req.body.account = user.email;
 	  req.body.pw = req.body.pw;
 	  req.body.name = user.name;
-	  database.updateUser(req, res); 
+	  database.updateUser(req); 
 
     } else {
       res.send('se1');	 

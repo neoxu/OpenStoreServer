@@ -24,10 +24,12 @@
     { "path": "/findInviteStore", "method": "GET", "callback": "database#findInviteStore" },
     { "path": "/updateInviteStore", "method": "POST", "callback": "database#updateInviteStore" },
     
+    { "path": "/findMyCustomer", "method": "GET", "callback": "database#findMyCustomer" },
     { "path": "/findMyWork", "method": "GET", "callback": "database#findMyWork" },        
     { "path": "/findWorks", "method": "POST", "callback": "database#findWorks" },
     { "path": "/updateJoinWork", "method": "POST", "callback": "database#updateJoinWork" },
-    
+    { "path": "/updateAcceptJoinWork", "method": "POST", "callback": "database#updateAcceptJoinWork" },
+        
     { "path": "/login", "method": "POST", "callback": "session#login" },
     { "path": "/login", "method": "GET", "callback": "application#login" },
     { "path": "/logout", "method": "GET", "callback": "session#logout" },

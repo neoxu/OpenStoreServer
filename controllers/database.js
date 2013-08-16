@@ -1,15 +1,49 @@
 var MongoClient = require('mongodb').MongoClient;
 var format = require('util').format;
+var global = require('global');
 var urlNiceMarket = format('');
 var url = format('');
 var reservationCollection = 'reservation';
 var usersCollection = 'users';
 var customCollection = 'customs';
+var customersCollection = 'customers';
 var storesCollection = 'stores';
 var worksCollection = 'works';
 
-var http = require('http');
-var	util = require('util'); 
+function setUserName(user) {			
+	if (user.account)
+		user.name = global.getUserName(user.account);
+
+	if (user.owner)
+		user.name = global.getUserName(user.owner);
+
+	if (user.members) {
+		for (var i in user.members)
+		if (user.members[i].account)
+			user.members[i].name = global.getUserName(user.members[i].account);
+	}
+
+	if (user.waiting) {
+		for (var i in user.waiting) {
+			if (user.waiting[i].account)
+				user.waiting[i].name = global.getUserName(user.waiting[i].account);
+		}
+	}
+
+	if (user.works) {
+		for (var i in user.works) {
+			if (user.works[i].account)
+				user.works[i].name = global.getUserName(user.works[i].account);
+		}
+	}
+	
+	if (user.customers) {
+		for (var i in user.customers) {
+			if (user.customers[i].account)
+				user.customers[i].name = global.getUserName(user.customers[i].account);
+		}
+	}
+}
 		
 function dbUpdate(dbUrl, collectionName, query, doc, res) {	
 	
@@ -49,10 +83,15 @@ function dbfind(dbUrl, collectionName, query, fields, sortParam, res) {
 					var myCursor = collection.find(query, fields).sort(sortParam); 
 					
 					myCursor.toArray(function(err, docs) {
-						if (!err)							
-							res.send(docs);		
+						if (!err) {				
+							for (var i in docs) {
+								setUserName(docs[i]);
+							}	
+									
+							res.send(docs);
+						}		
 						else
-						    res.send('se3');
+						    console.log(collectionName + ' find error ' + err);
 					});    
 				} else
 					console.log(collectionName + ' not found');
@@ -127,18 +166,17 @@ exports.findUserData = function(req, res) {
 	}
 };
 
-function updateUser(req, res) {		
+function updateUser(req) {		
 	if (req.body.account && req.body.pw && req.body.name) {
-		var doc = {};
-		doc['account'] = req.body.account;
-		doc['pw'] = req.body.pw;
-		doc['name'] = req.body.name;
-
+		global.addUserName(req.body.account, req.body.name);
 		var query = {account : req.body.account};
+		var user = {account: req.body.account, pw: req.body.pw, name: req.body.name};		
+		dbUpdate(urlNiceMarket, usersCollection, query, user);				
 		
-		dbUpdate(urlNiceMarket, usersCollection, query, doc, res);
-	} else
-		res.send('se2');
+		var work = {account : req.session.user.email};
+		dbUpdate(url, worksCollection, query, work);			
+		dbUpdate(url, customersCollection, query, work);		
+	}
 }
 
 exports.updateUser = updateUser;
@@ -204,7 +242,7 @@ function updateCustoms(req, res) {
 
 function findCustoms(req, res) {	
 	var query = {userid : req.session.user.id};
-	var fields = {"_id": 0};
+	var fields = {_id: 0};
 	var sortParam = {name:1};
 	dbfind(url, customCollection, query, fields, sortParam, res);
 }
@@ -260,15 +298,12 @@ function updateStore(req, res) {
 	if (req.body.storeName) {
 		var doc = {};
 		doc['owner'] = req.session.user.email;
-		doc['ownerName'] = req.session.user.name;
 		doc['storeName'] = req.body.storeName;
 
 		if (req.body.storeUrl)
 			doc['storeUrl'] = req.body.storeUrl;
 
-		var may = new Array();
-		var m = {account: req.session.user.email, name: req.session.user.name};
-		may.push(m);
+		var may = [{account: req.session.user.email}];
 		doc['members'] = may;
 
 		var query = {
@@ -276,18 +311,7 @@ function updateStore(req, res) {
 			storeName : req.body.storeName
 		};		
 		
-		dbUpdate(url, storesCollection, query, doc, res);
-		
-		var workQuery = {
-			account : req.session.user.email,
-			name : req.session.user.name
-		};		
-		
-		var work = { $set: {
-			account : req.session.user.email,
-			name : req.session.name
-		}};
-		dbUpdate(url, worksCollection, workQuery, work);				
+		dbUpdate(url, storesCollection, query, doc, res);				
 	} else
 		res.send('se2');										
 }
@@ -295,14 +319,12 @@ function updateStore(req, res) {
 function updateInviteMember(req, res) {
 	if (req.body.owner && req.body.storeName && req.body.inviteName) {
 		if (req.body.owner == req.session.user.email) {
-			var userName = '';
 			var query = {account : req.body.inviteName};
 			var fields = {_id : 0};
 			dbfindOne(urlNiceMarket, usersCollection, query, fields, checkUser);
 		
 			function checkUser(err, user) {	
 				if (!err && user) {
-					userName = user.name;
 					var query = {owner : req.body.owner, storeName : req.body.storeName};
 					var fields = {_id : 0};
 					dbfindOne(url, storesCollection, query, fields, checkStore);
@@ -311,45 +333,24 @@ function updateInviteMember(req, res) {
 			}
 						
 			function checkStore(err, store) {	
-				if (!err && store) {
-					var join = false;
-
-					if (store.members) {
-						store.members.forEach(function(m) {
-							if (m.account == req.body.inviteName) {
-								join = true;
-							}
-						});
-					}
-
-					if (store.waiting) {
-						store.waiting.forEach(function(m) {
-							if (m == req.body.inviteName) {
-								join = true;
-							}
-						});
-					}
-
-					if (join == false) {
-						var doc = {};
-						doc['owner'] = store.owner;
-						doc['storeName'] = store.storeName;
-						doc['storeUrl'] = store.storeUrl;
-						doc['members'] = store.members;						
-						
+				if (!err && store) {				
+					if (!hasMember(store, req.body.inviteName)) {					
 						if (!store.waiting) 
-						  store.waiting = new Array();
+						  store.waiting = [];
 						  
-						var m = {account: req.body.inviteName, name: userName}
+						var m = {account: req.body.inviteName}
 						store.waiting.push(m);
-						doc['waiting'] = store.waiting;
 
 						var query = {owner : req.body.owner, storeName : req.body.storeName};
-
-						dbUpdate(url, storesCollection, query, doc, res);
-						res.send(userName);
+						var doc = {
+							$set : {
+								waiting: store.waiting,
+								members: store.members						
+						}};			
 						
-						console.log(util.inspect(http.Server(req.app).connections, true, null, true));
+						dbUpdate(url, storesCollection, query, doc, res);
+						var userName = global.getUserName(req.body.inviteName);
+						res.send(userName);
 					} else
 						res.send('se4');
 				} else
@@ -377,23 +378,11 @@ function updateInviteStore(req, res) {
 
 		function checkStore(err, store) {
 			if (!err && store) {				
-				var index = -1;
-				if (store.waiting) {					
-					for (var i in store.waiting) {									
-						if (store.waiting[i].account === req.session.user.email) {
-							index = i;
-							break;
-						}				
-					}
-				}
-				
+				var index = getWaitingIndex(store, req.session.user.email);								
 				if (index >= 0) {
 					store.waiting.splice(index, 1);
 					if (req.body.answer === 1) {
-						var member = {
-							account : req.session.user.email,
-							name : req.session.user.name
-						};
+						var member = {account : req.session.user.email};
 						store.members.push(member);
 					}
 
@@ -410,10 +399,12 @@ function updateInviteStore(req, res) {
 }
 
 function findMyWork(req, res) {
-	var query = {account : req.session.user.email};	
+	var query = {account : req.session.user.email};
 	var fields = {_id: 0};
-	dbfindOne(url, worksCollection, query, fields, function(work) {
+	
+	dbfindOne(url, worksCollection, query, fields, function(err, work) {
 		if (work) {
+			setUserName(work);
 			res.send(work);
 		}
 		else
@@ -428,45 +419,182 @@ function findWorks(req, res) {
 	dbfind(urlNiceMarket, usersCollection, query, fields, sortParam, res);
 }
 
-function updateJoinWork(req, res) {
-	if (req.body.account) {
-		var query = {account : req.body.account};	
-		var fields = {_id: 0};
-		dbfindOne(url, worksCollection, query, fields, checkWork);
-		
-		function checkWork(work) {
-			console.log(work)
-			if (work) {
-				if (work.customs) {
-					for (var i in work.customs) {
-						if (work.customs[i].account === req.session.user.email) {
-							res.send('sc8');
-							return;
-						}
-					}
-				}
-				
-				if (work.waiting) {
-					for (var i in work.waiting) {
-						if (work.waiting[i].account === req.session.user.email) {
-							res.send('sc9');
-							return;
-						}
-					}					
-					
-					var member = {
-						account : req.session.user.email,
-						name : req.session.user.name
-					}; 
-
-					work.waiting.push(member);
-					var query = {account : req.body.account};	
-					dbUpdate(url, worksCollection, query, work, res);
-				}			
-			}
-			else {
-				res.send('sc7')
+function hasMember(user, account) {	
+	if (user.customs) {
+		for (var i in user.customs) {
+			if (user.customs[i].account === account) {
+				return true;
 			}
 		}
 	}
+
+	if (user.waiting) {
+		for (var i in user.waiting) {
+			if (user.waiting[i].account === account) {
+				return true;
+			}
+		}
+	} 	
+	
+	if (user.works) {
+		for (var i in user.works) {
+			if (user.works[i].account === account) {
+				return true;
+			}
+		}
+	}		
+
+	return false;
+}
+
+function getWaitingIndex(user, account) {		
+	if (user && user.waiting) 
+		for (var i in user.waiting) 
+			if (user.waiting[i].account === account) 
+				return i;
+
+    return -1;
+}
+
+function updateJoinWork(req, res) {
+	if (req.body.account) {
+		var query = {account : req.body.account};
+		var fields = {_id : 0};
+		dbfindOne(url, worksCollection, query, fields, checkWork);
+
+		function checkWork(err, work) {
+			if (!err && work) {
+				if (work.account !== req.session.user.email) {
+					if (!hasMember(work, req.session.user.email)) {
+						if (!work.waiting)
+							work.waiting = [];
+
+						var member = {account : req.session.user.email};
+						work.waiting.push(member);
+
+						var customerQuery = {account : req.session.user.email};
+						dbfindOne(url, customersCollection, customerQuery, fields, checkCustomer);
+
+						function checkCustomer(err, customer) {
+							if (!err && customer) {
+								if (!hasMember(customer, req.body.account)) {								
+									if (!customer.waiting)
+										customer.waiting = [];
+
+									var w = {account : req.body.account};
+									customer.waiting.push(w);
+
+									dbUpdate(url, worksCollection, query, work, res);
+									dbUpdate(url, customersCollection, customerQuery, customer, res);
+								}
+							}
+						}
+
+					} else
+						res.send('sc8');
+				} else
+					res.send('sc9');
+			} else
+				res.send('sc7');
+		}
+
+	}
+}
+
+function updateAcceptJoinWork(req, res) {
+	if (req.body.account && req.body.answer) {
+		var query = {account : req.session.user.email};
+		var fields = {_id : 0};
+		dbfindOne(url, worksCollection, query, fields, checkWork);
+
+		function checkWork(err, work) {
+			if (!err && work) {
+				var index = getWaitingIndex(work, req.body.account);
+				if (index >= 0) {
+					if (req.body.answer === 1) {
+						var has = false;
+						if (!work.customers)
+							work.customers = [];
+						else {
+							for (var i in work.customers) {
+								if (work.customers[i].account === req.body.account) {
+									has = true;
+									break;
+								}
+							}
+						}
+
+						if (has === false)
+							work.customers.push(work.waiting[index]);
+					}
+					work.waiting.splice(index, 1);
+
+					var newWork = {
+						$set : {
+							waiting : work.waiting,
+							customers : work.customers
+						}
+					};
+
+					var customerQuery = {account : req.body.account};
+					dbfindOne(url, customersCollection, customerQuery, fields, checkCustomer);
+					function checkCustomer(err, customer) {
+						if (!err && customer) {
+							dbUpdate(url, worksCollection, query, newWork, res);
+							
+							var index = getWaitingIndex(customer, req.session.user.email);
+							if (index >= 0) {
+								if (req.body.answer === 1) {
+									var has = false;
+									if (!customer.works)
+										customer.works = [];
+									else {
+										for (var i in customer.works) {
+											if (customer.works[i].account === req.session.user.email) {
+												has = true;
+												break;
+											}
+										}
+									}
+								}
+
+								if (has === false)
+									customer.works.push(customer.waiting[index]);
+									
+								customer.waiting.splice(index, 1);
+								
+								var newCustomer = {
+									$set : {
+										waiting : customer.waiting,
+										works : customer.works
+									}
+								};
+
+								dbUpdate(url, customersCollection, customerQuery, newCustomer, res);
+							} else
+								res.send('sc8');
+						} else
+							res.send('sc7');
+					}
+				} else
+					res.send('sc7');
+			} else
+				res.send('sc6');
+		}
+
+	} else
+		res.send('sc2');
+}
+
+function findMyCustomer(req, res) {
+	var query = {account: req.session.user.email};	
+	var fields = {_id: 0};
+	dbfindOne(url, customersCollection, query, fields, function(err, customer){
+		if (!err && customer) {
+			setUserName(customer);			
+			res.send(customer);
+		}	
+		else
+			res.send('sc2');
+	});
 }

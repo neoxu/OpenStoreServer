@@ -1,7 +1,8 @@
-var ACS = require('acs').ACS, 
-	logger = require('acs').logger, 
-	express = require('express'), 
-	partials = require('express-partials');
+var ACS = require('acs').ACS;
+var	logger = require('acs').logger; 
+var	express = require('express');
+var	partials = require('express-partials');
+var global = require('global');
 
 var allowCrossDomain = function(req, res, next) {	
 	//console.log('req.method: ' + req.method);	
@@ -49,6 +50,8 @@ function start(app) {
 	
 	//pross cross origin
 	app.use(allowCrossDomain);
+	
+	global.loadUserName();
 }
 
 // release resources
