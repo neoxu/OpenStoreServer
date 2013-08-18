@@ -263,7 +263,7 @@ function updateReservation(req, res) {
 	if (req.body.date && req.body.custom && req.body.h && req.body.m) {
 		var doc = {};
 		doc['userid'] = req.session.user.id;
-		doc['date'] = req.body.date
+		doc['date'] = req.body.date;
 		doc['custom'] = req.body.custom;
 		doc['project'] = req.body.project;
 		doc['h'] = req.body.h;
@@ -305,6 +305,14 @@ function updateStore(req, res) {
 
 		var may = [{account: req.session.user.email}];
 		doc['members'] = may;
+		
+		var days = new Array();
+		for (var i = 0; i < 7; i ++) {
+			day = {open: true, startH: 9, startM: 0, endH: 21, endM: 0};
+			days.push(day);			
+		}
+		
+		doc['openTime'] = days;
 
 		var query = {
 			owner : req.session.user.email,
@@ -338,7 +346,7 @@ function updateInviteMember(req, res) {
 						if (!store.waiting) 
 						  store.waiting = [];
 						  
-						var m = {account: req.body.inviteName}
+						var m = {account: req.body.inviteName};
 						store.waiting.push(m);
 
 						var query = {owner : req.body.owner, storeName : req.body.storeName};
@@ -359,6 +367,20 @@ function updateInviteMember(req, res) {
 		
 		} else
 		    res.send('se2');
+	} else
+		res.send('se2');
+}
+
+function updateStoreTime(req, res) {	
+	if (req.body.owner && req.body.storeName) {
+		if (req.body.owner == req.session.user.email) {
+			var query = {owner : req.body.owner, storeName : req.body.storeName};
+						
+			var doc = {$set : {openTime : req.body.openTime}};
+			dbUpdate(url, storesCollection, query, doc, res); 
+
+		} else
+			res.send('se2');
 	} else
 		res.send('se2');
 }
@@ -464,7 +486,7 @@ function updateJoinWork(req, res) {
 
 		function checkWork(err, work) {
 			if (!err && work) {
-				if (work.account !== req.session.user.email) {
+				if (true) { //(work.account !== req.session.user.email) {
 					if (!hasMember(work, req.session.user.email)) {
 						if (!work.waiting)
 							work.waiting = [];
@@ -486,8 +508,10 @@ function updateJoinWork(req, res) {
 
 									dbUpdate(url, worksCollection, query, work, res);
 									dbUpdate(url, customersCollection, customerQuery, customer, res);
-								}
-							}
+								} else
+								    res.send('sc8');
+							} else 
+								res.send('sc8');						
 						}
 
 					} else
@@ -597,4 +621,11 @@ function findMyCustomer(req, res) {
 		else
 			res.send('sc2');
 	});
+}
+
+function findAllStores(req, res) {
+	var query = {};	
+	var fields = {_id: 0, members: 0, waiting: 0};
+	var s = {storeName: 1};
+	dbfind(url, storesCollection, query, fields, s, res);
 }

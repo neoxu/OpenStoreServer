@@ -1,5 +1,5 @@
-var ACS = require('acs').ACS,
-    logger = require('acs').logger
+var ACS = require('acs').ACS;
+var logger = require('acs').logger;
 
 function checkUserSession(req, res, next) {
   if(req.session && req.session.flash && req.session.flash.r == 0){
