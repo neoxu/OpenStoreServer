@@ -5,22 +5,14 @@ var	partials = require('express-partials');
 var global = require('global');
 
 var allowCrossDomain = function(req, res, next) {	
-	//console.log('req.method: ' + req.method);	
+	res.header('Access-Control-Allow-Origin', '*');
+	//res.header('Access-Control-Allow-Credentials', true);
+	res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+	  
 	// intercept OPTIONS method
 	if ('OPTIONS' == req.method) {		
-		var origin = req.header('Origin');
-		if(!origin){
-        	return next();
-      	}
-      
-		res.header('Access-Control-Allow-Origin', origin);
-		res.header('Access-Control-Allow-Credentials', 'true');
-		res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,POST,DELETE,OPTIONS');
-    	
     	headers = req.header('Access-Control-Request-Headers');
-    	res.header('Access-Control-Allow-Headers',headers);	
-		res.header('Access-Control-Max-Age', '12000');   	
-    			
+    	res.header('Access-Control-Allow-Headers', headers);
 		res.send(200);
 	}
 	else {	
