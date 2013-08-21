@@ -15,7 +15,7 @@ function checkUserSession(req, res, next) {
       if(e.success && e.success === true){
         var user = e.users[0];
         if(user.first_name && user.last_name) {
-          user.name = user.first_name + ' ' + user.last_name;
+          user.name = user.last_name+user.first_name;
         } else {
           user.name = user.username;
         }
@@ -25,10 +25,7 @@ function checkUserSession(req, res, next) {
         logger.debug('Error: ' + JSON.stringify(e));
         delete req.session.user;
         req.session.flash = {msg:"Please login first.",r:0};
-        res.render('login', {
-          layout: 'application',
-          req: req
-        });
+        //res.render('login', {layout: 'application',req: req});
         return;
       }
       next();
