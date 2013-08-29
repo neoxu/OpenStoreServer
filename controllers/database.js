@@ -51,11 +51,11 @@ function dbUpdate(dbUrl, collectionName, query, doc, res) {
 		if (!err) {
 			console.log(collectionName + ' update success');
 			if (res)
-				res.send('1');
+				res.send({});
 		} else {
 			console.log(collectionName + ' update fail ' + err);
 			if (res)
-				res.send('0');
+				res.send({err: 'se2'});
 		}
 	}
 
@@ -88,7 +88,7 @@ function dbfind(dbUrl, collectionName, query, fields, sortParam, res) {
 								setUserName(docs[i]);
 							}	
 									
-							res.send(docs);
+							res.send({doc: docs});
 						}		
 						else
 						    console.log(collectionName + ' find error ' + err);
@@ -122,7 +122,7 @@ function doRemove(dbUrl, collectionName, query, res) {
 	
 	function removeCallback(err) {
 		if (!err) {
-			res.send('1');
+			res.send({});
 			console.log(collectionName + ' remove success ');
 		} else {
 			console.log(collectionName + ' remove fail ' + err);
@@ -151,7 +151,7 @@ function findUser(req, res) {
 	dbfindOne(urlNiceMarket, usersCollection, query, fields, checkUser);
 	
 	function checkUser(err, user) {
-		res.send(user);
+		res.send({doc:user});
 	}
 }
 
@@ -227,7 +227,7 @@ function updateCustoms(req, res) {
 							
 							succCount++;
 							if (succCount >= recCount)
-								res.send('1');
+								res.send({});
 						}
 						else
 						{
@@ -277,7 +277,7 @@ function updateReservation(req, res) {
 		
 		dbUpdate(url, reservationCollection, query, doc, res);
 	} else 
-		res.send('se2');		
+		res.send({err: 'se2'});		
 }
 
 function removeReservation(req, res) {	
@@ -321,7 +321,7 @@ function updateStore(req, res) {
 		
 		dbUpdate(url, storesCollection, query, doc, res);				
 	} else
-		res.send('se2');										
+		res.send({err: 'se2'});										
 }
 
 function updateInviteMember(req, res) {
@@ -337,7 +337,7 @@ function updateInviteMember(req, res) {
 					var fields = {_id : 0};
 					dbfindOne(url, storesCollection, query, fields, checkStore);
 				} else
-					res.send('se5');
+					res.send({err: 'se5'});
 			}
 						
 			function checkStore(err, store) {	
@@ -358,17 +358,17 @@ function updateInviteMember(req, res) {
 						
 						dbUpdate(url, storesCollection, query, doc, res);
 						var userName = global.getUserName(req.body.inviteName);
-						res.send(userName);
+						res.send({doc: userName});
 					} else
-						res.send('se4');
+						res.send({err: 'se4'});
 				} else
-					res.send('se6');
+					res.send({err: 'se6'});
 			}
 		
 		} else
-		    res.send('se2');
+		    res.send({err: 'se2'});
 	} else
-		res.send('se2');
+		res.send({err: 'se2'});
 }
 
 function updateStoreTime(req, res) {	
@@ -380,9 +380,9 @@ function updateStoreTime(req, res) {
 			dbUpdate(url, storesCollection, query, doc, res); 
 
 		} else
-			res.send('se2');
+			res.send({err: 'se2'});
 	} else
-		res.send('se2');
+		res.send({err: 'se2'});
 }
 
 function findInviteStore(req, res) {
@@ -427,10 +427,10 @@ function findMyWork(req, res) {
 	dbfindOne(url, worksCollection, query, fields, function(err, work) {
 		if (work) {
 			setUserName(work);
-			res.send(work);
+			res.send({doc: work});
 		}
 		else
-			res.send('se7');
+			res.send();
 	});
 }
 
@@ -509,19 +509,18 @@ function updateJoinWork(req, res) {
 									dbUpdate(url, worksCollection, query, work, res);
 									dbUpdate(url, customersCollection, customerQuery, customer, res);
 								} else
-								    res.send('sc8');
+								    res.send({err: 'se8'});
 							} else 
-								res.send('sc8');						
+								res.send({err: 'se8'});						
 						}
 
 					} else
-						res.send('sc8');
+						res.send({err: 'se8'});
 				} else
-					res.send('sc9');
+					res.send({err: 'se9'});
 			} else
-				res.send('sc7');
+				res.send({err: 'se7'});
 		}
-
 	}
 }
 
@@ -596,18 +595,18 @@ function updateAcceptJoinWork(req, res) {
 
 								dbUpdate(url, customersCollection, customerQuery, newCustomer, res);
 							} else
-								res.send('sc8');
+								res.send({err: 'se8'});
 						} else
-							res.send('sc7');
+							res.send({err: 'se7'});
 					}
 				} else
-					res.send('sc7');
+					res.send({err: 'se7'});
 			} else
-				res.send('sc6');
+				res.send({err: 'se6'});
 		}
 
 	} else
-		res.send('sc2');
+		res.send({err: 'se2'});
 }
 
 function findMyCustomer(req, res) {
@@ -616,10 +615,10 @@ function findMyCustomer(req, res) {
 	dbfindOne(url, customersCollection, query, fields, function(err, customer){
 		if (!err && customer) {
 			setUserName(customer);			
-			res.send(customer);
+			res.send({doc: customer});
 		}	
 		else
-			res.send('sc2');
+			res.send();
 	});
 }
 

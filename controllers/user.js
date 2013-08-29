@@ -20,7 +20,7 @@ function fbLogin(req, res) {
 				r : 0
 			};
 			req.session.user = user;
-			res.send('1');
+			res.send({});
 			logger.info('User logged in: ' + user.name);
 		} else {	
 						
@@ -44,9 +44,9 @@ function fbLogin(req, res) {
 					req.body.pw = '1234';
 					req.body.name = req.body.email;
 					database.updataUser(req, res);
-					res.send('1');
+					res.send({});
 				} else {
-					res.send('se1');
+					res.send({err: 'se2'});
 				}
 			}, req, res); 
 		}
@@ -68,7 +68,7 @@ function signup(req, res) {
       user.name = user.last_name + user.first_name;      
       req.session.user = user;
       //res.redirect('/');
-      res.send('1');
+      res.send({});
       logger.info('Created user: ' + user.name);
       
       
@@ -78,7 +78,7 @@ function signup(req, res) {
 	  database.updateUser(req); 
 
     } else {
-      res.send('se1');	 
+      res.send({err: 'se2'});	 
       /*req.session.flash = {msg:data.message, r:0};
       req.session.controller = "signup"
       res.render('login', {

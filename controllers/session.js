@@ -14,12 +14,12 @@ function login(req, res) {
       req.session.flash.r = 1;
       req.session.flash = {msg:"Hello " + user.name + ".", r:0};
       req.session.user = user;
-      res.send('1');
+      res.send({});
       //res.redirect('/');
       logger.info('User logged in: ' + user.name);
     } else {
       req.session.flash = {msg:data.message, r:0};
-      res.send('se11');
+      res.send({err: 'se11'});
       /*res.render('login', {
         layout: 'application',
         user: req.session.user,
